@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  valueOfX:
+    Description: The value of X.
+    Type: Number
+  valueOfY:
+    Description: The value of Y.
+    Type: Number
+Resources:
+  adderCustomResource:
+    Type: 'AWS::CloudFormation::CustomResource'
+    Properties:
+      ServiceToken: !ImportValue custom-adder-service-token
+      X: !Ref valueOfX
+      'Y': !Ref valueOfY
+Outputs:
+  result:
+    Description: The result of X + Y
+    Value: !GetAtt 
+      - adderCustomResource
+      - sumResult
+    Export:
+      Name: sumResult

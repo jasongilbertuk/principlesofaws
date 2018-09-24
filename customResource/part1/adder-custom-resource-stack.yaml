@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Demonstrates creation of a Custom Resource Service
+Resources:
+  adderLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt 
+        - adderLambdaFunctionRole
+        - Arn
+      Runtime: nodejs8.10
+      Timeout: 60
+      Code:
+        ZipFile: |
+          var response = require('cfn-response'); 
+          var aws = require('aws-sdk');
+
+          exports.handler = function(event, context) {
+              console.log(event);
+              
+              var props = event.ResourceProperties;
+              var X     = parseInt(props.X);
+              var Y     = parseInt(props.Y);
+              var cfnRespData = { sumResult : (X+Y).toString() };
+              response.send(event, context, response.SUCCESS, cfnRespData,"customResourcID");
+          };
+  adderLambdaFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+Outputs:
+  result:
+    Description: The result of X + Y
+    Value: !GetAtt 
+      - adderLambdaFunction
+      - Arn
+    Export:
+      Name: custom-adder-service-token
